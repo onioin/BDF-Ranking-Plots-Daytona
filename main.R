@@ -3,6 +3,7 @@ require(ggplot2)
 require(RColorBrewer)
 require(readr)
 require(magrittr)
+require(forcats)
 
 RANKINGS_PATH <- "./rankings.csv"
 ENTRIES_PATH  <- "./entries.csv"
@@ -121,10 +122,15 @@ TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
        title="Score Distribution per Lobby and Car Class")
 ggsave(paste0(PLOTS_DIR, "combinedScoreLobbyClass.png"))
 
-# Box plot of score, grouped by car, also plotting the mean
-TORARankings %>% ggplot(mapping=aes(x=CAR, y=SCORE, fill=CAR)) +
+# Box plot of score, grouped by car, also plotting the mean and sample size
+sampleSize <- TORARankings %>% group_by(CAR) %>% summarize(num=n())
+
+TORARankings %>%
+  mutate(CAR=fct_reorder(CAR, SCORE, .fun=median)) %>%
+  ggplot(mapping=aes(x=reorder(CAR, SCORE), y=SCORE, fill=CAR)) +
   geom_boxplot(colour='black', outlier.shape=1) + 
   stat_summary(fun=mean, geom="point") +
+  geom_text(data=sampleSize, aes(CAR, -1, label=paste0("n=",num))) +
   theme(
     axis.ticks.x=element_blank(),
     axis.text.x=element_blank()
