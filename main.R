@@ -127,7 +127,7 @@ sampleSize <- TORARankings %>% group_by(CAR) %>% summarize(num=n())
 
 TORARankings %>%
   mutate(CAR=fct_reorder(CAR, SCORE, .fun=median)) %>%
-  ggplot(mapping=aes(x=reorder(CAR, SCORE), y=SCORE, fill=CAR)) +
+  ggplot(mapping=aes(x=CAR, y=SCORE, fill=CAR)) +
   geom_boxplot(colour='black', outlier.shape=1) + 
   stat_summary(fun=mean, geom="point") +
   geom_text(data=sampleSize, aes(CAR, -1, label=paste0("n=",num))) +
