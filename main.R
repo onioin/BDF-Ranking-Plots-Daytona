@@ -6,6 +6,10 @@ require(magrittr)
 RANKINGS_PATH <- "./rankings.csv"
 ENTRIES_PATH  <- "./entries.csv"
 TIMING_PATH   <- "./liveTiming.csv"
+PLOTS_DIR     <- "./generatedPlots/"
+
+SNAMES <- c("STINT 1", "STINT 2", "STINT 3", "STINT 4", "STINT 5", "STINT 6",
+            "STINT 7", "STINT 8", "STINT 9", "STINT 10", "STINT 11", "STINT 12")
 
 
 # Read in BDF's Rankings
@@ -20,7 +24,7 @@ TORARankings <- read_csv(RANKINGS_PATH, col_select=(3:7),
 # Read in the entry list
 # Clean up unused and duplicate data
 # Change car to factor (easier grouping)
-# Rename columns to match BDF's standard
+# Rename columns to match the standard
 TORAEntries <- read_csv(ENTRIES_PATH, skip=3, col_select=c(1,3), 
                         show_col_types=FALSE, name_repair="unique_quiet") %>%
   mutate(across(2, as.factor)) %>%
@@ -31,8 +35,53 @@ TORAEntries <- read_csv(ENTRIES_PATH, skip=3, col_select=c(1,3),
 # Essentially adding which car the team drove to the table
 TORARankings %<>% merge(TORAEntries, sort=FALSE)
 
+# Read in stint data, skipping un-needed rows and columns
+# Remove the unnecessary row
+# Rename columns to match the standard
 TORAStints <- read_csv(TIMING_PATH, skip=1, col_select=seq(13, 91, by=7),
                        show_col_types=FALSE, name_repair="unique_quiet") %>%
-  mutate()
+  filter(row_number() != 1) %>%
+  rename_with(~SNAMES)
 
+#~~~~~~~~~~~~~~~~~~ PLOTS ~~~~~~~~~~~~~~~~~~#
+
+# Box plot of score, grouped by lobby
+# Not terribly useful, shows that higher lobby drivers have higher scores (duh)
+TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=LBY)) + 
+  geom_boxplot() +
+  guides(fill="none") +
+  labs(x="Lobby", y="Score", title="Score Distibution per Lobby")
+ggsave(paste0(PLOTS_DIR, "boxScoreLobby.png"))
+
+# Box plot of score, grouped by class
+# Not extremely useful, shows that Proto drivers have a higher median score
+# Not statistically significant i.e. both confidence intervals cover similar
+# ranges, the notches on the plot roughly represent these intervals 
+# (McGill et al. (1978))
+# 51.498 for GT vs 53.565 for P
+# Uncomment below line for the full summary
+# aggregate(TORARankings$SCORE, list(TORARankings$CLA), boxplot.stats)
+TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
+  geom_boxplot(notch=TRUE) +
+  guides(fill="none") +
+  labs(x="Car Class", y="Score", title="Score Distribution per Car Class")
+ggsave(paste0(PLOTS_DIR, "boxScoreClass.png"))
+
+# Box plot of score, grouped by lobby and class
+TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
+  geom_boxplot(notch=TRUE) +
+  labs(x="Lobby", y="Score", fill="Car Class", 
+       title="Score Distribution per Lobby and Car Class")
+ggsave(paste0(PLOTS_DIR, "boxScoreLobbyClass.png"))
+
+# Box plot of score, grouped by car
+TORARankings %>% ggplot(mapping=aes(x=CAR, y=SCORE, fill=CAR)) +
+  geom_boxplot() + 
+  theme(
+    axis.ticks.x=element_blank(),
+    axis.text.x=element_blank()
+  ) +
+  labs(x="Car", y="Score", fill="Car", title="Score Distribution per Car")
+ggsave(paste0(PLOTS_DIR, "boxScoreCar.png"))
+  
 
