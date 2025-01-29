@@ -1,5 +1,6 @@
 require(dplyr)
 require(ggplot2)
+require(RColorBrewer)
 require(readr)
 require(magrittr)
 
@@ -53,6 +54,21 @@ TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=LBY)) +
   labs(x="Lobby", y="Score", title="Score Distibution per Lobby")
 ggsave(paste0(PLOTS_DIR, "boxScoreLobby.png"))
 
+# Violin plot of above
+TORARankings %>% ggplot(aes(x=LBY, y=SCORE, fill=LBY)) +
+  geom_violin() +
+  guides(fill="none") +
+  labs(x="Lobby", y="Score", title="Score Distribution per Lobby")
+ggsave(paste0(PLOTS_DIR, "violinScoreLobby.png"))
+
+# Combined plot of above
+TORARankings %>% ggplot(aes(x=LBY, y=SCORE, fill=LBY)) +
+  geom_violin() +
+  geom_boxplot(width=0.1, colour='grey', alpha=0.3) +
+  guides(fill="none") +
+  labs(x="Lobby", y="Score", title="Score Distribution per Lobby")
+ggsave(paste0(PLOTS_DIR, "combinedScoreLobby.png"))
+
 # Box plot of score, grouped by class
 # Not extremely useful, shows that Proto drivers have a higher median score
 # Not statistically significant i.e. both confidence intervals cover similar
@@ -67,6 +83,21 @@ TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
   labs(x="Car Class", y="Score", title="Score Distribution per Car Class")
 ggsave(paste0(PLOTS_DIR, "boxScoreClass.png"))
 
+# Violin plot of above
+TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
+  geom_violin() +
+  guides(fill="none") +
+  labs(x="Car Class", y="Score", title="Score Distribution per Car Class")
+ggsave(paste0(PLOTS_DIR, "violinScoreClass.png"))
+
+# Combined plot of above
+TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
+  geom_violin() +
+  geom_boxplot(notch=TRUE, width=0.1, colour='grey', alpha=0.3) +
+  guides(fill="none") +
+  labs(x="Car Class", y="Score", title="Score Distribution per Car Class")
+ggsave(paste0(PLOTS_DIR, "combinedScoreClass.png"))
+
 # Box plot of score, grouped by lobby and class
 TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
   geom_boxplot(notch=TRUE) +
@@ -74,14 +105,34 @@ TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
        title="Score Distribution per Lobby and Car Class")
 ggsave(paste0(PLOTS_DIR, "boxScoreLobbyClass.png"))
 
-# Box plot of score, grouped by car
+# Violin plot of above
+TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
+  geom_violin() +
+  labs(x="Lobby", y="Score", fill="Car Class", 
+       title="Score Distribution per Lobby and Car Class")
+ggsave(paste0(PLOTS_DIR, "violinScoreLobbyClass.png"))
+
+# Combined plot of above
+TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
+  geom_violin(position=position_dodge(0.9)) +
+  geom_boxplot(notch=TRUE, width=0.1, colour='grey', alpha=0.3, 
+               position=position_dodge(0.9)) +
+  labs(x="Lobby", y="Score", fill="Car Class", 
+       title="Score Distribution per Lobby and Car Class")
+ggsave(paste0(PLOTS_DIR, "combinedScoreLobbyClass.png"))
+
+# Box plot of score, grouped by car, also plotting the mean
 TORARankings %>% ggplot(mapping=aes(x=CAR, y=SCORE, fill=CAR)) +
-  geom_boxplot() + 
+  geom_boxplot(colour='black', outlier.shape=1) + 
+  stat_summary(fun=mean, geom="point") +
   theme(
     axis.ticks.x=element_blank(),
     axis.text.x=element_blank()
   ) +
-  labs(x="Car", y="Score", fill="Car", title="Score Distribution per Car")
+  labs(x="Car", y="Score", fill="Car", title="Score Distribution per Car") +
+  scale_fill_brewer(palette="Paired")
 ggsave(paste0(PLOTS_DIR, "boxScoreCar.png"))
+
+
   
 
