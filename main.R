@@ -258,6 +258,7 @@ for(i in 1:12){
   ggsave(paste0(PLOTS_DIR, "distScoreLobbyStint", as.character(i), ".png"))
 }
 
+# Distribution plot for all stints, grouped by lobby
 TORAStints %>% drop_na() %>%
   ggplot(aes(x=SCORE, group=STINT)) +
   geom_density(aes(group=LBY, fill=LBY), alpha=0.5, colour='black') +
