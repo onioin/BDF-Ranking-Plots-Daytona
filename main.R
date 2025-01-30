@@ -185,7 +185,7 @@ TORARankings %>% drop_na() %>%
   facet_wrap(~CAR) +
   scale_fill_brewer(palette="Paired") +
   theme(
-    strip.text=element_text(size=8, debug=FALSE),
+    strip.text=element_text(size=6.5, debug=FALSE),
     strip.background=element_blank()
   ) +
   labs(x="Score", y="Density", title="Score Distribution per Car")
