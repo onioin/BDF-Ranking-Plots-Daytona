@@ -213,7 +213,7 @@ TORAStints %>% drop_na() %>%
     strip.background=element_blank()
   ) +
   scale_fill_brewer(palette="Set3") +
-  labs(x="Score", y="Density", title="Distribution of Score for all Stints")
+  labs(x="Score", y="Density", title="Score Distribution for all Stints")
 ggsave(paste0(PLOTS_DIR, "distScoreAllStints.png"))
 
 # Distribution plot of Score per stint
@@ -253,8 +253,18 @@ for(i in 1:12){
     ggplot(aes(x=SCORE, group=LBY, fill=LBY)) +
     geom_density(alpha=0.5, colour='black') +
     labs(x="Score", y="Density", fill="Lobby", 
-         title=paste0("Distribution of Score per Lobby for Stint",
+         title=paste0("Score Distribution per Lobby for Stint",
                       as.character(i)))
   ggsave(paste0(PLOTS_DIR, "distScoreLobbyStint", as.character(i), ".png"))
 }
 
+TORAStints %>% drop_na() %>%
+  ggplot(aes(x=SCORE, group=STINT)) +
+  geom_density(aes(group=LBY, fill=LBY), alpha=0.5, colour='black') +
+  facet_wrap(~STINT) +
+  theme(
+    strip.background=element_blank()
+  ) +
+  labs(x="Score", y="Density", fill="Lobby", 
+       title="Score Distribution per Lobby for all Stints")
+ggsave(paste0(PLOTS_DIR, "distScoreLobbyAllStints.png"))
