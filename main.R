@@ -188,3 +188,13 @@ for(i in 1:12){
   ggsave(paste0(PLOTS_DIR, "stint", as.character(i), "Dist.png"))
 }
 
+# Box plots of distribution per stint
+ggplot(data=TORAStintStats, 
+       mapping=aes(x=S, ymin=YMIN, lower=LOWER, 
+                   middle=MIDDLE, upper=UPPER, ymax=YMAX, fill=S)) +
+  geom_boxplot(stat="identity") +
+  guides(fill='none') +
+  scale_fill_brewer(palette="Set3") +
+  labs(x="Stint", y="Score", title="Score Distribution per Stint")
+ggsave(paste0(PLOTS_DIR, "boxScoreStint.png"))
+
