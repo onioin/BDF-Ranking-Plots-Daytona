@@ -189,7 +189,7 @@ TORARankings %>% drop_na() %>%
     strip.background=element_blank()
   ) +
   labs(x="Score", y="Density", title="Score Distribution per Car")
-ggsave(paste0(PLOTS_DIR, "distScoreAllCars.png"))
+ggsave(paste0(PLOTS_DIR, "sumScoreAllCars.png"))
 
 # Distribution of Score per car
 for(i in 1:12){
@@ -214,7 +214,7 @@ TORAStints %>% drop_na() %>%
   ) +
   scale_fill_brewer(palette="Set3") +
   labs(x="Score", y="Density", title="Score Distribution for all Stints")
-ggsave(paste0(PLOTS_DIR, "distScoreAllStints.png"))
+ggsave(paste0(PLOTS_DIR, "sumScoreAllStints.png"))
 
 # Distribution plot of Score per stint
 for(i in 1:12){
@@ -268,4 +268,4 @@ TORAStints %>% drop_na() %>%
   ) +
   labs(x="Score", y="Density", fill="Lobby", 
        title="Score Distribution per Lobby for all Stints")
-ggsave(paste0(PLOTS_DIR, "distScoreLobbyAllStints.png"))
+ggsave(paste0(PLOTS_DIR, "sumScoreLobbyAllStints.png"))
