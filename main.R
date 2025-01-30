@@ -2,6 +2,7 @@ require(dplyr)
 require(ggplot2)
 require(RColorBrewer)
 require(readr)
+require(tidyr)
 require(magrittr)
 require(forcats)
 
@@ -12,6 +13,8 @@ PLOTS_DIR     <- "./generatedPlots/"
 
 SNAMES <- c("STINT 1", "STINT 2", "STINT 3", "STINT 4", "STINT 5", "STINT 6",
             "STINT 7", "STINT 8", "STINT 9", "STINT 10", "STINT 11", "STINT 12")
+SDOTNAMES <- c("STINT.1", "STINT.2", "STINT.3", "STINT.4", "STINT.5", "STINT.6",
+               "STINT.7", "STINT.8", "STINT.9", "STINT.10", "STINT.11", "STINT.12")
 
 
 # Read in BDF's Rankings
@@ -19,8 +22,9 @@ SNAMES <- c("STINT 1", "STINT 2", "STINT 3", "STINT 4", "STINT 5", "STINT 6",
 # Change lobby and class to factors (easier grouping)
 # Remove drivers whose lobby is 'N/A'
 TORARankings <- read_csv(RANKINGS_PATH, col_select=(3:7), 
-                         show_col_types=FALSE) %>%
+                         show_col_types=FALSE, na="NULL") %>%
   mutate(across(c(1,2), as.factor)) %>% 
+  mutate(DRIVER=toupper(DRIVER)) %>%
   filter(as.integer(LBY) != 5)
 
 # Read in the entry list
@@ -42,28 +46,57 @@ TORARankings %<>% merge(TORAEntries, sort=FALSE)
 # Rename columns to match the standard
 TORAStints <- read_csv(TIMING_PATH, skip=1, col_select=seq(13, 91, by=7),
                        show_col_types=FALSE, name_repair="unique_quiet") %>%
+  mutate(across(1:12, toupper)) %>%
   filter(row_number() != 1) %>%
   rename_with(~SNAMES)
+
+# Replace each driver name in each stint with their score
+tmp = c()
+for(name in SNAMES){
+  tmp %<>% append( TORARankings %>% 
+                     filter(DRIVER %in% TORAStints[[name]]) %>%
+                     select(SCORE) %>% rename(!!name := SCORE)
+  )
+}
+
+# Do some odd manipulation to put the data in a usable form
+TORAStintScore <- data.frame(STINT=SNAMES) %>% cbind(t(data.frame(t(tmp)))) %>%
+  rename("SCORES" = 2)
+
+# Calculate the box plot stats for each stint
+TORAStintStats <- data.frame(S=1:12,YMIN=0,LOWER=0,MIDDLE=0,UPPER=0,YMAX=0) %>%
+  mutate(across(1, as.factor))
+for(i in 1:12){
+  tmp <- boxplot.stats(TORAStintScore$SCORES[i][[SDOTNAMES[i]]]) 
+  TORAStintStats$YMIN[i] <- tmp$stats[1]
+  TORAStintStats$LOWER[i] <- tmp$stats[2]
+  TORAStintStats$MIDDLE[i] <- tmp$stats[3]
+  TORAStintStats$UPPER[i] <- tmp$stats[4]
+  TORAStintStats$YMAX[i] <- tmp$stats[5]
+}
 
 #~~~~~~~~~~~~~~~~~~ PLOTS ~~~~~~~~~~~~~~~~~~#
 
 # Box plot of score, grouped by lobby
 # Not terribly useful, shows that higher lobby drivers have higher scores (duh)
-TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=LBY)) + 
+TORARankings %>% drop_na() %>%
+  ggplot(mapping=aes(x=LBY, y=SCORE, fill=LBY)) + 
   geom_boxplot() +
   guides(fill="none") +
   labs(x="Lobby", y="Score", title="Score Distibution per Lobby")
 ggsave(paste0(PLOTS_DIR, "boxScoreLobby.png"))
 
 # Violin plot of above
-TORARankings %>% ggplot(aes(x=LBY, y=SCORE, fill=LBY)) +
+TORARankings %>% drop_na() %>%
+  ggplot(mapping=aes(x=LBY, y=SCORE, fill=LBY)) +
   geom_violin() +
   guides(fill="none") +
   labs(x="Lobby", y="Score", title="Score Distribution per Lobby")
 ggsave(paste0(PLOTS_DIR, "violinScoreLobby.png"))
 
 # Combined plot of above
-TORARankings %>% ggplot(aes(x=LBY, y=SCORE, fill=LBY)) +
+TORARankings %>% drop_na() %>%
+  ggplot(mapping=aes(x=LBY, y=SCORE, fill=LBY)) +
   geom_violin() +
   geom_boxplot(width=0.1, colour='grey', alpha=0.3) +
   guides(fill="none") +
@@ -78,21 +111,24 @@ ggsave(paste0(PLOTS_DIR, "combinedScoreLobby.png"))
 # 51.498 for GT vs 53.565 for P
 # Uncomment below line for the full summary
 # aggregate(TORARankings$SCORE, list(TORARankings$CLA), boxplot.stats)
-TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
+TORARankings %>% drop_na() %>% 
+  ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
   geom_boxplot(notch=TRUE) +
   guides(fill="none") +
   labs(x="Car Class", y="Score", title="Score Distribution per Car Class")
 ggsave(paste0(PLOTS_DIR, "boxScoreClass.png"))
 
 # Violin plot of above
-TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
+TORARankings %>% drop_na() %>% 
+  ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
   geom_violin() +
   guides(fill="none") +
   labs(x="Car Class", y="Score", title="Score Distribution per Car Class")
 ggsave(paste0(PLOTS_DIR, "violinScoreClass.png"))
 
 # Combined plot of above
-TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
+TORARankings %>% drop_na() %>% 
+  ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
   geom_violin() +
   geom_boxplot(notch=TRUE, width=0.1, colour='grey', alpha=0.3) +
   guides(fill="none") +
@@ -100,21 +136,24 @@ TORARankings %>% ggplot(mapping=aes(x=CLA, y=SCORE, fill=CLA)) +
 ggsave(paste0(PLOTS_DIR, "combinedScoreClass.png"))
 
 # Box plot of score, grouped by lobby and class
-TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
+TORARankings %>% drop_na() %>% 
+  ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
   geom_boxplot(notch=TRUE) +
   labs(x="Lobby", y="Score", fill="Car Class", 
        title="Score Distribution per Lobby and Car Class")
 ggsave(paste0(PLOTS_DIR, "boxScoreLobbyClass.png"))
 
 # Violin plot of above
-TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
+TORARankings %>% drop_na() %>% 
+  ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
   geom_violin() +
   labs(x="Lobby", y="Score", fill="Car Class", 
        title="Score Distribution per Lobby and Car Class")
 ggsave(paste0(PLOTS_DIR, "violinScoreLobbyClass.png"))
 
 # Combined plot of above
-TORARankings %>% ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
+TORARankings %>% drop_na() %>% 
+  ggplot(mapping=aes(x=LBY, y=SCORE, fill=CLA)) +
   geom_violin(position=position_dodge(0.9)) +
   geom_boxplot(notch=TRUE, width=0.1, colour='grey', alpha=0.3, 
                position=position_dodge(0.9)) +
@@ -125,7 +164,7 @@ ggsave(paste0(PLOTS_DIR, "combinedScoreLobbyClass.png"))
 # Box plot of score, grouped by car, also plotting the mean and sample size
 sampleSize <- TORARankings %>% group_by(CAR) %>% summarize(num=n())
 
-TORARankings %>%
+TORARankings %>% drop_na() %>% 
   mutate(CAR=fct_reorder(CAR, SCORE, .fun=median)) %>%
   ggplot(mapping=aes(x=CAR, y=SCORE, fill=CAR)) +
   geom_boxplot(colour='black', outlier.shape=1) + 
@@ -139,6 +178,13 @@ TORARankings %>%
   scale_fill_brewer(palette="Paired")
 ggsave(paste0(PLOTS_DIR, "boxScoreCar.png"))
 
-
-  
+# Density plots for each stint
+for(i in 1:12){
+  TORAStintScore$SCORES[i] %>% data.frame() %>%
+    ggplot(aes_string(SDOTNAMES[i])) + 
+    geom_density(fill="red", alpha=0.5) +
+    labs(x="Score",y="Density",
+         title=paste0("Distribution of Scores for Stint ", as.character(i)))
+  ggsave(paste0(PLOTS_DIR, "stint", as.character(i), "Dist.png"))
+}
 
