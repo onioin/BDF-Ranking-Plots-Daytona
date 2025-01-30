@@ -56,32 +56,6 @@ TORAStints <- read_csv(TIMING_PATH, skip=1, col_select=seq(13, 91, by=7),
   arrange(STINT, LBY, desc(CLA))
 
 
-
-# Replace each driver name in each stint with their score
-tmp = c()
-for(name in SNAMES){
-  tmp %<>% append( TORARankings %>% 
-                     filter(DRIVER %in% TORAStints[[name]]) %>%
-                     select(SCORE) %>% rename(!!name := SCORE)
-  )
-}
-
-# Do some odd manipulation to put the data in a usable form
-TORAStintScore <- data.frame(STINT=SNAMES) %>% cbind(t(data.frame(t(tmp)))) %>%
-  rename("SCORES" = 2)
-
-# Calculate the box plot stats for each stint
-TORAStintStats <- data.frame(S=1:12,YMIN=0,LOWER=0,MIDDLE=0,UPPER=0,YMAX=0) %>%
-  mutate(across(1, as.factor))
-for(i in 1:12){
-  tmp <- boxplot.stats(TORAStintScore$SCORES[i][[SDOTNAMES[i]]]) 
-  TORAStintStats$YMIN[i] <- tmp$stats[1]
-  TORAStintStats$LOWER[i] <- tmp$stats[2]
-  TORAStintStats$MIDDLE[i] <- tmp$stats[3]
-  TORAStintStats$UPPER[i] <- tmp$stats[4]
-  TORAStintStats$YMAX[i] <- tmp$stats[5]
-}
-
 #~~~~~~~~~~~~~~~~~~ PLOTS ~~~~~~~~~~~~~~~~~~#
 
 # Box plot of score, grouped by lobby
@@ -185,29 +159,5 @@ TORARankings %>% drop_na() %>%
   scale_fill_brewer(palette="Paired")
 ggsave(paste0(PLOTS_DIR, "boxScoreCar.png"))
 
-# Density plots for each stint
-for(i in 1:12){
-  TORAStintScore$SCORES[i] %>% data.frame() %>%
-    ggplot(aes_string(SDOTNAMES[i])) + 
-    geom_density(fill="red", alpha=0.5) +
-    labs(x="Score",y="Density", 
-         caption=paste0("Mean: ", 
-                        mean(TORAStintScore$SCORES[i][[SDOTNAMES[i]]], 
-                             na.rm=TRUE), "\nMedian: ",
-                        median(TORAStintScore$SCORES[i][[SDOTNAMES[i]]], 
-                               na.rm=TRUE)),
-         title=paste0("Distribution of Scores for Stint ", as.character(i)))
-  ggsave(paste0(PLOTS_DIR, "stint", as.character(i), "Dist.png"))
-}
 
-# Box plots of distribution per stint
-ggplot(data=TORAStintStats, 
-       mapping=aes(x=S, ymin=YMIN, lower=LOWER, 
-                   middle=MIDDLE, upper=UPPER, ymax=YMAX, fill=S)) +
-  geom_boxplot(stat="identity") +
-  geom_text(aes(y=(MIDDLE+2), label=MIDDLE)) +
-  guides(fill='none') +
-  scale_fill_brewer(palette="Set3") +
-  labs(x="Stint", y="Score", title="Score Distribution per Stint")
-ggsave(paste0(PLOTS_DIR, "boxScoreStint.png"))
 
