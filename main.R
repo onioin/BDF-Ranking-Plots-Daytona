@@ -6,13 +6,28 @@ require(tidyr)
 require(magrittr)
 require(forcats)
 
+
+#~~~~~~~~~~~~~~~~~~ CONSTANTS ~~~~~~~~~~~~~~~~~~#
 RANKINGS_PATH <- "./rankings.csv"
 ENTRIES_PATH  <- "./entries.csv"
 TIMING_PATH   <- "./liveTiming.csv"
 PLOTS_DIR     <- "./generatedPlots/"
 
 SNAMES <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12")
+CARSTR <- c("1984 Nissan #20 Bluebird Super Silhouette",
+            "1979 Datsun #33 280ZX Turbo",
+            "1983 Porsche #11 956",
+            "1974 Porsche #1 911 RSR",
+            "1983 Nissan #23 Silvia Super Silhouette",
+            "1983 Jaguar #44 XJR-5",
+            "1976 Chevrolet #76 Greenwood Corvette",
+            "1982 Ferrari #72 512 BB/LM",
+            "1975 BMW #25 3.0 CSL",
+            "1981 Ford #2 Capri Turbo",
+            "1982 Ford #6 Mustang IMSA GT",
+            "1985 Nissan #83 GTP ZX-Turbo")
 
+#~~~~~~~~~~~~~~~~~~ DATA ~~~~~~~~~~~~~~~~~~#
 
 # Read in BDF's Rankings
 # Clean up unused data
@@ -146,7 +161,7 @@ ggsave(paste0(PLOTS_DIR, "combinedScoreLobbyClass.png"))
 sampleSize <- TORARankings %>% group_by(CAR) %>% summarize(num=n())
 
 TORARankings %>% drop_na() %>% 
-  mutate(CAR=fct_reorder(CAR, SCORE, .fun=median)) %>%
+  mutate(CAR=fct_reorder(CAR, SCORE, .fun=median, .desc=TRUE)) %>%
   ggplot(mapping=aes(x=CAR, y=SCORE, fill=CAR)) +
   geom_boxplot(colour='black', outlier.shape=1) + 
   stat_summary(fun=mean, geom="point") +
@@ -159,5 +174,34 @@ TORARankings %>% drop_na() %>%
   scale_fill_brewer(palette="Paired")
 ggsave(paste0(PLOTS_DIR, "boxScoreCar.png"))
 
+# Distribution w/ all cars except those w/ small sample sizes (n < 5)
+TORARankings %>% drop_na() %>%
+  filter(as.integer(CAR) != 12) %>%
+  filter(as.integer(CAR) != 7) %>%
+  mutate(CAR=fct_reorder(CAR, SCORE, .fun=median, .desc=TRUE)) %>%
+  ggplot(aes(x=SCORE, group=CAR, fill=CAR)) +
+  geom_density(alpha=0.8, colour='black') +
+  facet_wrap(~CAR) +
+  #theme_minimal() +
+  scale_fill_brewer(palette="Paired") +
+  theme(
+    strip.text=element_text(size=8, debug=FALSE),
+    strip.background=element_blank()
+  ) +
+  labs(x="Score", y="Density", title="Score Distribution per Car")
+ggsave(paste0(PLOTS_DIR, "distScoreAllCars.png"))
+
+# Distribution of Score per car
+COLOURS <- brewer.pal(12, "Paired")
+for(i in 1:12){
+  TORARankings %>% drop_na() %>%
+    mutate(fct_reorder(CAR, SCORE, .fun=median, .desc=TRUE)) %>%
+    filter(as.integer(CAR) == i) %>%
+    ggplot(aes(x=SCORE)) +
+    geom_density(fill=COLOURS[i], alpha=0.8, colour='black') +
+    labs(x="Score", y="Density", title=paste0("Score Distribution for ",
+                                              CARSTR[i]))
+  ggsave(paste0(PLOTS_DIR, "distScoreCar", as.character(i), ".png"))
+}
 
 
