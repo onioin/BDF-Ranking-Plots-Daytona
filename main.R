@@ -183,7 +183,12 @@ for(i in 1:12){
   TORAStintScore$SCORES[i] %>% data.frame() %>%
     ggplot(aes_string(SDOTNAMES[i])) + 
     geom_density(fill="red", alpha=0.5) +
-    labs(x="Score",y="Density",
+    labs(x="Score",y="Density", 
+         caption=paste0("Mean: ", 
+                        mean(TORAStintScore$SCORES[i][[SDOTNAMES[i]]], 
+                             na.rm=TRUE), "\nMedian: ",
+                        median(TORAStintScore$SCORES[i][[SDOTNAMES[i]]], 
+                               na.rm=TRUE)),
          title=paste0("Distribution of Scores for Stint ", as.character(i)))
   ggsave(paste0(PLOTS_DIR, "stint", as.character(i), "Dist.png"))
 }
@@ -193,6 +198,7 @@ ggplot(data=TORAStintStats,
        mapping=aes(x=S, ymin=YMIN, lower=LOWER, 
                    middle=MIDDLE, upper=UPPER, ymax=YMAX, fill=S)) +
   geom_boxplot(stat="identity") +
+  geom_text(aes(y=(MIDDLE+2), label=MIDDLE)) +
   guides(fill='none') +
   scale_fill_brewer(palette="Set3") +
   labs(x="Stint", y="Score", title="Score Distribution per Stint")
