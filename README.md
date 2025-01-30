@@ -48,6 +48,8 @@ Density plots represent the distribution of a variable, they are similar to viol
 
 ![Density Plot Example](https://github.com/onioin/BDF-Ranking-Plots-Daytona/blob/master/generatedPlots/distScoreCar4.png?raw=true)
 
+Density plots will match with `dist[*].png` where [\*] represents a specific chart
+
 ### Summary Plots
 
 For a selection of variables (cars and stints), I have elected to plot several plots in a grid. This can make it easier to quickly see differences in the distributions between different values.
