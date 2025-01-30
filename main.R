@@ -245,3 +245,16 @@ for(i in 1:12){
   ggsave(paste0(PLOTS_DIR, "distScoreClassStint", as.character(i), ".png"))
 }
 
+# Distribution plot per stint, separated by lobby
+for(i in 1:12){
+  TORAStints %>%
+    filter(as.integer(STINT) == i) %>%
+    drop_na() %>%
+    ggplot(aes(x=SCORE, group=LBY, fill=LBY)) +
+    geom_density(alpha=0.5, colour='black') +
+    labs(x="Score", y="Density", fill="Lobby", 
+         title=paste0("Distribution of Score per Lobby for Stint",
+                      as.character(i)))
+  ggsave(paste0(PLOTS_DIR, "distScoreLobbyStint", as.character(i), ".png"))
+}
+
