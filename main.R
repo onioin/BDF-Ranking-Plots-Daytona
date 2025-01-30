@@ -229,4 +229,19 @@ for(i in 1:12){
   ggsave(paste0(PLOTS_DIR, "distScoreStint", as.character(i), ".png"))
 }
 
+# Distribution plot per stint, separated by car class
+for(i in 1:12){
+  PCLASS <- TORAStints %>%
+    filter(as.integer(STINT) == i) %>%
+    drop_na() %>% filter(as.integer(CLA) == 3)
+  GTCLASS <- TORAStints %>%
+    filter(as.integer(STINT) == i) %>%
+    drop_na() %>% filter(as.integer(CLA) == 2)
+  ggplot(data=NULL, mapping=aes(fill=CLA)) + 
+    geom_density(data=GTCLASS, aes(x=SCORE, y=..density..)) +
+    geom_density(data=PCLASS, aes(x=SCORE,y=-..density..)) +
+    labs(x="Score", y="Density", fill="Class", 
+         title=paste0("Score Distribution for Stint ", as.character(i)))
+  ggsave(paste0(PLOTS_DIR, "distScoreClassStint", as.character(i), ".png"))
+}
 
