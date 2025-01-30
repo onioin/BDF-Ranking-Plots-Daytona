@@ -13,19 +13,20 @@ ENTRIES_PATH  <- "./entries.csv"
 TIMING_PATH   <- "./liveTiming.csv"
 PLOTS_DIR     <- "./generatedPlots/"
 
-SNAMES <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12")
-CARSTR <- c("1984 Nissan #20 Bluebird Super Silhouette",
-            "1979 Datsun #33 280ZX Turbo",
-            "1983 Porsche #11 956",
-            "1974 Porsche #1 911 RSR",
-            "1983 Nissan #23 Silvia Super Silhouette",
-            "1983 Jaguar #44 XJR-5",
-            "1976 Chevrolet #76 Greenwood Corvette",
-            "1982 Ferrari #72 512 BB/LM",
-            "1975 BMW #25 3.0 CSL",
-            "1981 Ford #2 Capri Turbo",
-            "1982 Ford #6 Mustang IMSA GT",
-            "1985 Nissan #83 GTP ZX-Turbo")
+SNAMES  <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12")
+COLOURS <- brewer.pal(12, "Paired")
+CARSTR  <- c("1984 Nissan #20 Bluebird Super Silhouette",
+             "1979 Datsun #33 280ZX Turbo",
+             "1983 Porsche #11 956",
+             "1974 Porsche #1 911 RSR",
+             "1983 Nissan #23 Silvia Super Silhouette",
+             "1983 Jaguar #44 XJR-5",
+             "1976 Chevrolet #76 Greenwood Corvette",
+             "1982 Ferrari #72 512 BB/LM",
+             "1975 BMW #25 3.0 CSL",
+             "1981 Ford #2 Capri Turbo",
+             "1982 Ford #6 Mustang IMSA GT",
+             "1985 Nissan #83 GTP ZX-Turbo")
 
 #~~~~~~~~~~~~~~~~~~ DATA ~~~~~~~~~~~~~~~~~~#
 
@@ -182,7 +183,6 @@ TORARankings %>% drop_na() %>%
   ggplot(aes(x=SCORE, group=CAR, fill=CAR)) +
   geom_density(alpha=0.8, colour='black') +
   facet_wrap(~CAR) +
-  #theme_minimal() +
   scale_fill_brewer(palette="Paired") +
   theme(
     strip.text=element_text(size=8, debug=FALSE),
@@ -192,7 +192,6 @@ TORARankings %>% drop_na() %>%
 ggsave(paste0(PLOTS_DIR, "distScoreAllCars.png"))
 
 # Distribution of Score per car
-COLOURS <- brewer.pal(12, "Paired")
 for(i in 1:12){
   TORARankings %>% drop_na() %>%
     mutate(fct_reorder(CAR, SCORE, .fun=median, .desc=TRUE)) %>%
@@ -202,6 +201,32 @@ for(i in 1:12){
     labs(x="Score", y="Density", title=paste0("Score Distribution for ",
                                               CARSTR[i]))
   ggsave(paste0(PLOTS_DIR, "distScoreCar", as.character(i), ".png"))
+}
+
+# Distribution of score for all stints
+TORAStints %>% drop_na() %>%
+  ggplot(aes(x=SCORE, group=STINT, fill=STINT)) +
+  geom_density(alpha=0.8, colour='black') +
+  facet_wrap(~STINT) +
+  guides(fill="none") +
+  theme(
+    strip.background=element_blank()
+  ) +
+  scale_fill_brewer(palette="Set3") +
+  labs(x="Score", y="Density", title="Distribution of Score for all Stints")
+ggsave(paste0(PLOTS_DIR, "distScoreAllStints.png"))
+
+# Distribution plot of Score per stint
+for(i in 1:12){
+  TORAStints %>% 
+    filter(as.integer(STINT) == i) %>%
+    drop_na() %>%
+    ggplot(aes(x=SCORE)) +
+    geom_density(fill=brewer.pal(12, "Set3")[i],
+                 alpha=0.8, colour='black') +
+    labs(x="Score", y="Density", title=paste0("Score Distribution for Stint ",
+                                              as.character(i)))
+  ggsave(paste0(PLOTS_DIR, "distScoreStint", as.character(i), ".png"))
 }
 
 
