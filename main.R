@@ -11,10 +11,7 @@ ENTRIES_PATH  <- "./entries.csv"
 TIMING_PATH   <- "./liveTiming.csv"
 PLOTS_DIR     <- "./generatedPlots/"
 
-SNAMES <- c("STINT 1", "STINT 2", "STINT 3", "STINT 4", "STINT 5", "STINT 6",
-            "STINT 7", "STINT 8", "STINT 9", "STINT 10", "STINT 11", "STINT 12")
-SDOTNAMES <- c("STINT.1", "STINT.2", "STINT.3", "STINT.4", "STINT.5", "STINT.6",
-               "STINT.7", "STINT.8", "STINT.9", "STINT.10", "STINT.11", "STINT.12")
+SNAMES <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12")
 
 
 # Read in BDF's Rankings
@@ -44,11 +41,21 @@ TORARankings %<>% merge(TORAEntries, sort=FALSE)
 # Read in stint data, skipping un-needed rows and columns
 # Remove the unnecessary row
 # Rename columns to match the standard
+# Pivot to keep the data tidy
+# Join with rank data
+# Sort by Stint, Lobby, Class
 TORAStints <- read_csv(TIMING_PATH, skip=1, col_select=seq(13, 91, by=7),
                        show_col_types=FALSE, name_repair="unique_quiet") %>%
   mutate(across(1:12, toupper)) %>%
   filter(row_number() != 1) %>%
-  rename_with(~SNAMES)
+  rename_with(~SNAMES) %>% 
+  pivot_longer(1:12, names_to="STINT", values_to="DRIVER") %>%
+  mutate(across(1, as.integer)) %>% 
+  mutate(across(1, as.factor)) %>% 
+  merge(TORARankings) %>%
+  arrange(STINT, LBY, desc(CLA))
+
+
 
 # Replace each driver name in each stint with their score
 tmp = c()
